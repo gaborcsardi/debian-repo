@@ -22,15 +22,13 @@ inputs:
     required: false
     default: ${{ github.token }}
 
-outputs:
-
 runs:
   using: "composite"
   steps:
   - name: Install dependencies
     run: |
       apt-get update && apt-get -y install git dpkg-dev gpg
-    shell: bbash
+    shell: bash
 
   - name: Log in to GitHub
     run: |
@@ -71,10 +69,10 @@ runs:
       export DEB_ORIGIN=https://github.com/${{ inputs.source_repo }}
       export DEB_LABEL="$DEB_ORIGIN"
       export DEB_DESCRIPTION="Packages from ${DEB_ORIGIN}."
-      cd dists/all && ${{ github.action_path} }/generate-release.sh > Release
+      cd dists/all && ${{ github.action_path }}/generate-release.sh > Release
     shell: bash
 
-  - name: TODO: sign the repository
+  - name: "TODO: sign the repository"
     run: |
       echo "To be implemented later"
     shell: bash
