@@ -1,0 +1,88 @@
+name: "debian-repo"
+description: |
+  Create a Debian package repository on GitHub Pages, from packages published in
+  GitHub Releases. Please run this action on Linux, preferably on `ubuntu-latest`.
+author: "Gábor Csárdi"
+
+inputs:
+  source-repo:
+    description: |
+      SLug of the repository to look up DEB packages in Github Releases in.
+      Defaults to the current repository.
+    required: false
+    default: ${{ github.repository }}
+  target-repo:
+    description: |
+      Slug of the repository to deploy to. Defaults to the current repository.
+    required: false
+    default: ${{ github.repository }}
+  token:
+    description: |
+      GitHub token to use to authenticate to GitHub.
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+
+runs:
+  using: "composite"
+  steps:
+  - name: Install dependencies
+    run: |
+      apt-get update && apt-get -y install git dpkg-dev gpg
+    shell: bbash
+
+  - name: Log in to GitHub
+    run: |
+      echo ${{ inputs.token }} | gh auth login --with-token
+    shell: bash
+
+  - name: Download release
+    run: |
+      set -e
+      urls=$(gh api repos/r-lib/rig/releases/latest |
+             jq -r '.assets[].browser_download_url' |
+             grep '\.deb$')
+      if [[ -z "$urls" ]]; then
+        echo "No .deb files to publish"
+        exit 1
+      fi
+      cd /tmp
+      rm -rf repo
+      mkdir -p repo/deb/pool/main
+      cd repo/deb/pool/main
+      for url in `echo $urls`; do
+        echo "Downloading $url"
+        curl -LO "$url"
+      done
+    shell: bash
+
+  - name: Create Debian repository
+    run: |
+      set -e
+      cd /tmp/repo/deb
+      mkdir -p dists/all/main
+      mkdir -p dists/all/main/binary-amd64
+      mkdir -p dists/all/main/binary-arm64
+      dpkg-scanpackages --arch amd64 pool/ > dists/all/main/binary-amd64/Packages
+      dpkg-scanpackages --arch arm64 pool/ > dists/all/main/binary-arm64/Packages
+      gzip -kf dists/all/main/binary-amd64/Packages
+      gzip -kf dists/all/main/binary-arm64/Packages
+      export DEB_ORIGIN=https://github.com/${{ inputs.source_repo }}
+      export DEB_LABEL="$DEB_ORIGIN"
+      export DEB_DESCRIPTION="Packages from ${DEB_ORIGIN}."
+      cd dists/all && ${{ github.action_path} }/generate-release.sh > Release
+    shell: bash
+
+  - name: TODO: sign the repository
+    run: |
+      echo "To be implemented later"
+    shell: bash
+
+  - name: Deploy to GitHub Pages
+    uses: JamesIves/github-pages-deploy-action@v4.4.1
+    with:
+      clean: false
+      branch: gh-pages
+      folder: /tmp/repo
+      token: ${{ inputs.token }}
