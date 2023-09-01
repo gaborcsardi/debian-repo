@@ -64,9 +64,9 @@ runs:
     run: |
       set -e
       cd /tmp/repo/deb
-      REPO_NAME="${{ inputs.debian-repo-name }}"
+      export REPO_NAME="${{ inputs.debian-repo-name }}"
       if [[ -z "$repo_name" ]]; then
-        REPO_NAME="`echo ${{ github.repository }} | cut -f2 -d/`"
+        export REPO_NAME="`echo ${{ github.repository }} | cut -f2 -d/`"
       fi
       mkdir -p dists/${REPO_NAME}/main
       mkdir -p dists/${REPO_NAME}/main/binary-amd64
@@ -89,7 +89,7 @@ runs:
   - name: Deploy to GitHub Pages
     uses: JamesIves/github-pages-deploy-action@v4.4.1
     with:
-      clean: false
+      clean: true
       branch: gh-pages
       folder: /tmp/repo
       token: ${{ inputs.token }}
