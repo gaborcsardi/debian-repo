@@ -27,7 +27,7 @@ runs:
   steps:
   - name: Install dependencies
     run: |
-      apt-get update && apt-get -y install git dpkg-dev gpg
+      sudo apt-get update && sudo apt-get -y install git dpkg-dev gpg
     shell: bash
 
   - name: Log in to GitHub
