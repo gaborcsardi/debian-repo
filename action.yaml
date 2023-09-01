@@ -96,7 +96,8 @@ runs:
   - name: "Add public key to the repository"
     run: |
       set -e
-      echo "${{ inputs.gpg-public-key }}" > /tmp/repo/deb/gpg.key
+      echo "${{ inputs.gpg-public-key }}" > /tmp/repo/deb/rig.asc
+      cat /tmp/repo/deb/rig.asc | gpg --dearmor -o /tmp/repo/deb/rig.gpg
     shell: bash
 
   - name: "Import private key"
