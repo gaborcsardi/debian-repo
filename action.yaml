@@ -21,6 +21,11 @@ inputs:
       GitHub token to use to authenticate to GitHub.
     required: false
     default: ${{ github.token }}
+  debian-repo-name:
+    description: |
+      The name of the Debian repository. By default the name of the current
+      repository.
+    required: false
 
 runs:
   using: "composite"
@@ -59,17 +64,21 @@ runs:
     run: |
       set -e
       cd /tmp/repo/deb
-      mkdir -p dists/all/main
-      mkdir -p dists/all/main/binary-amd64
-      mkdir -p dists/all/main/binary-arm64
-      dpkg-scanpackages --arch amd64 pool/ > dists/all/main/binary-amd64/Packages
-      dpkg-scanpackages --arch arm64 pool/ > dists/all/main/binary-arm64/Packages
-      gzip -kf dists/all/main/binary-amd64/Packages
-      gzip -kf dists/all/main/binary-arm64/Packages
-      export DEB_ORIGIN=https://github.com/${{ inputs.source_repo }}
+      REPO_NAME="${{ inputs.debian-repo-name }}"
+      if [[ -z "$repo_name" ]]; then
+        REPO_NAME="`echo ${{ github.repository }} | cut -f2 -d/`"
+      fi
+      mkdir -p dists/${REPO_NAME}/main
+      mkdir -p dists/${REPO_NAME}/main/binary-amd64
+      mkdir -p dists/${REPO_NAME}/main/binary-arm64
+      dpkg-scanpackages --arch amd64 pool/ > dists/${REPO_NAME}/main/binary-amd64/Packages
+      dpkg-scanpackages --arch arm64 pool/ > dists/${REPO_NAME}/main/binary-arm64/Packages
+      gzip -kf dists/${REPO_NAME}/main/binary-amd64/Packages
+      gzip -kf dists/${REPO_NAME}/main/binary-arm64/Packages
+      export DEB_ORIGIN=https://github.com/${{ inputs.source-repo }}
       export DEB_LABEL="$DEB_ORIGIN"
       export DEB_DESCRIPTION="Packages from ${DEB_ORIGIN}."
-      cd dists/all && ${{ github.action_path }}/generate-release.sh > Release
+      cd dists/${REPO_NAME} && ${{ github.action_path }}/generate-release.sh > Release
     shell: bash
 
   - name: "TODO: sign the repository"
@@ -84,3 +93,5 @@ runs:
       branch: gh-pages
       folder: /tmp/repo
       token: ${{ inputs.token }}
+      single-commit: true
+      repository-name: ${{ inputs.target-repo }}

@@ -17,8 +17,8 @@ do_hash() {
 cat << EOF
 Origin: ${DEB_ORIGIN}
 Label: ${DEB_LABEL}
-Suite: all
-Codename: all
+Suite: ${REPO_NAME}
+Codename: ${REPO_NAME}
 Version: 1.0.0
 Architectures: amd64 arm64
 Components: main
