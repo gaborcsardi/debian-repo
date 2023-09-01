@@ -26,6 +26,18 @@ inputs:
       The name of the Debian repository. By default the name of the current
       repository.
     required: false
+  gpg-public-key:
+    description: |
+      Public key to add to the repository.
+    required: false
+  gpg-private-key:
+    description: |
+      Private key to sign the repository.
+    reqiured: true
+  gpg-passphrase:
+    description: |
+      Pass phrase for the private key.
+    required: true
 
 runs:
   using: "composite"
@@ -81,9 +93,32 @@ runs:
       cd dists/${REPO_NAME} && ${{ github.action_path }}/generate-release.sh > Release
     shell: bash
 
-  - name: "TODO: sign the repository"
+  - name: "Add public key to the repository"
     run: |
-      echo "To be implemented later"
+      set -e
+      echo "${{ inputs.gpg-public-key }}" > /tmp/repo/deb/gpg.key
+    shell: bash
+
+  - name: "Import private key"
+    uses: crazy-max/ghaction-import-gpg@v5
+    with:
+      gpg_private_key: ${{ inputs.gpg-private-key }}
+      passphrase: ${{ inputs.gpg-passphrase }}
+
+  - name: "Sign repository"
+    run: |
+      set -e
+      cd /tmp/repo/deb
+      export REPO_NAME="${{ inputs.debian-repo-name }}"
+      if [[ -z "$repo_name" ]]; then
+        export REPO_NAME="`echo ${{ github.repository }} | cut -f2 -d/`"
+      fi
+      cat dists/${REPO_NAME}/Release |
+        gpg --default-key csardi.gabor@gmail.com -abs \
+        > dists/${REPO_NAME}/Release.gpg
+      cat dists/${REPO_NAME}/Release |
+        gpg --default-key csardi.gabor@gmail.com -abs --clearsign \
+        > dists/${REPO_NAME}/InRelease
     shell: bash
 
   - name: Deploy to GitHub Pages
