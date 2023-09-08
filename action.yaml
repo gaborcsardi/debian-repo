@@ -83,10 +83,13 @@ runs:
       mkdir -p dists/${REPO_NAME}/main
       mkdir -p dists/${REPO_NAME}/main/binary-amd64
       mkdir -p dists/${REPO_NAME}/main/binary-arm64
+      mkdir -p dists/${REPO_NAME}/main/binary-i386
       dpkg-scanpackages --arch amd64 pool/ > dists/${REPO_NAME}/main/binary-amd64/Packages
       dpkg-scanpackages --arch arm64 pool/ > dists/${REPO_NAME}/main/binary-arm64/Packages
+      dpkg-scanpackages --arch i386 pool/ > dists/${REPO_NAME}/main/binary-i386/Packages
       gzip -kf dists/${REPO_NAME}/main/binary-amd64/Packages
       gzip -kf dists/${REPO_NAME}/main/binary-arm64/Packages
+      gzip -kf dists/${REPO_NAME}/main/binary-i386/Packages
       export DEB_ORIGIN=https://github.com/${{ inputs.source-repo }}
       export DEB_LABEL="$DEB_ORIGIN"
       export DEB_DESCRIPTION="Packages from ${DEB_ORIGIN}."
