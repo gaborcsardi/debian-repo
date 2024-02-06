@@ -104,7 +104,7 @@ runs:
     shell: bash
 
   - name: "Import private key"
-    uses: crazy-max/ghaction-import-gpg@v5
+    uses: crazy-max/ghaction-import-gpg@v6
     with:
       gpg_private_key: ${{ inputs.gpg-private-key }}
       passphrase: ${{ inputs.gpg-passphrase }}
@@ -126,7 +126,7 @@ runs:
     shell: bash
 
   - name: Deploy to GitHub Pages
-    uses: JamesIves/github-pages-deploy-action@v4.4.1
+    uses: JamesIves/github-pages-deploy-action@v4.5.0
     with:
       clean: true
       branch: gh-pages
