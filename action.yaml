@@ -38,6 +38,13 @@ inputs:
     description: |
       Pass phrase for the private key.
     required: true
+  release-tag:
+    description: |
+      Tag of the release to download the DEB packages from. Defaults to the
+      latest published (non-draft) release. Set to a specific tag to download
+      from that release instead, including draft releases.
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -55,7 +62,17 @@ runs:
   - name: Download release
     run: |
       set -e
-      urls=$(gh api repos/r-lib/rig/releases/latest |
+      if [[ -z "${{ inputs.release-tag }}" ]]; then
+        release=$(gh api repos/${{ inputs.source-repo }}/releases/latest)
+      else
+        release=$(gh api repos/${{ inputs.source-repo }}/releases |
+                  jq -r '.[] | select(.tag_name == "${{ inputs.release-tag }}")')
+      fi
+      if [[ -z "$release" ]]; then
+        echo "Release not found: ${{ inputs.release-tag }}"
+        exit 1
+      fi
+      urls=$(echo "$release" |
              jq -r '.assets[].browser_download_url' |
              grep '\.deb$')
       if [[ -z "$urls" ]]; then
